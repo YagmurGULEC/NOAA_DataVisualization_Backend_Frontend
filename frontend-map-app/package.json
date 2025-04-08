@@ -1,0 +1,44 @@
+{
+  "name": "frontend-map-app",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev --turbopack",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@deck.gl/core": "^9.1.5",
+    "@deck.gl/extensions": "^9.1.5",
+    "@deck.gl/geo-layers": "^9.1.5",
+    "@deck.gl/layers": "^9.1.5",
+    "@deck.gl/mapbox": "^9.1.5",
+    "@deck.gl/react": "^9.1.5",
+    "@deck.gl/widgets": "^9.1.5",
+    "@vis.gl/react-maplibre": "^8.0.1",
+    "bootstrap": "^5.3.3",
+    "d3": "^7.9.0",
+    "date-fns": "^4.1.0",
+    "deck.gl": "^9.1.5",
+    "deck.gl-leaflet": "^1.3.1",
+    "maplibre-gl": "^4.7.1",
+    "next": "^15.2.4",
+    "rc-slider": "^11.1.8",
+    "react": "^18.3.1",
+    "react-datepicker": "^8.2.1",
+    "react-dom": "^18.3.1",
+    "react-map-gl": "^7.1.9",
+    "react-slider": "^2.0.6"
+  },
+  "devDependencies": {
+    "@eslint/eslintrc": "^3",
+    "@types/geojson": "^7946.0.16",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "15.2.0",
+    "typescript": "^5"
+  }
+}
