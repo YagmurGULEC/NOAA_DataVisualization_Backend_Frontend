@@ -1,46 +1,41 @@
-import React, { useState,useEffect} from "react";
+import { parseISO, format } from "date-fns";
+import React, { useState, useEffect, use } from "react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 
 type Props = {
-  startDate: Date | null;
-  endDate: Date | null;
-  setStartDate: (date: Date | null) => void;
-  setEndDate: (date: Date | null) => void;
+  filterDates: string[];
+  setSelectedDate: (arg0: string) => void;
 };
 
-const DateRangePicker:React.FC<Props> = ({ startDate, endDate, setStartDate, setEndDate,minDate,maxDate }) => {
+const DateRangePicker: React.FC<Props> = ({ filterDates, setSelectedDate }) => {
+  const [excludedDates, setExcludedDates] = useState<Date[]>([]);
+  const [selectedDate, setSelectedDateState] = useState<Date | null>(null);
 
+  useEffect(() => {
 
+    const dates = filterDates.map((date) => new Date(date));
 
-
-
+  }, [filterDates]);
   return (
-    <div className="d-flex flex-column align-items-start gap-2">
-      <label className="text-bold text-dark">Start Date</label>
+    <>
+      <label className="text-bold text-dark">Select Dates</label>
       <DatePicker
-        selected={startDate}
-        onChange={(date) => setStartDate(date)}
-        selectsStart
-        startDate={startDate}
-        minDate={minDate}
-        maxDate={maxDate}
-        endDate={endDate}
+        selected={selectedDate}
+        onChange={(date) => {
+          setSelectedDateState(date);
+          const formattedDate = date ? format(date, "yyyy-MM-dd") : null;
+          if (formattedDate) {
+            setSelectedDate(formattedDate);
+          }
+        }}
+
+        includeDates={filterDates.map((date) => parseISO(date))}
+        dateFormat={"yyyy-MM-dd"}
         placeholderText="Select start date"
       />
-      <label className="text-dark">End Date</label>
-      <DatePicker
-        selected={endDate}
-        onChange={(date) => setEndDate(date)}
-        selectsEnd
-        startDate={startDate}
-        minDate={minDate}
-        maxDate={maxDate}
-        endDate={endDate}
-        minDate={startDate}
-        placeholderText="Select end date"
-      />
-    </div>
+    </>
+
 
 
   );

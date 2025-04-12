@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 import java.time.LocalDate;
 import java.util.List;
+
 public interface StationDataRepo extends JpaRepository<StationData, StationDataId>{
    @Query("SELECT MIN(d.date), MAX(d.date) FROM StationData d")
    List<List<LocalDate>> findMinMaxDates();
@@ -15,4 +16,9 @@ public interface StationDataRepo extends JpaRepository<StationData, StationDataI
     @Query("SELECT DISTINCT d.datatype,d.datasetName FROM StationData d")
     List<Object[]> getDataSet();
 
+    @Query("SELECT DISTINCT d.datatype,d.datasetName FROM StationData d WHERE d.date BETWEEN :startDate AND :endDate")
+    List<Object[]> getDataSetByDateRange(LocalDate startDate, LocalDate endDate);
+ 
+    @Query("SELECT DISTINCT d.date FROM StationData d WHERE d.datatype = :datatype AND d.datasetName = :datasetName")
+   List<LocalDate> findDatesByDatatypeAndDatasetName(String datatype, String datasetName);
 }

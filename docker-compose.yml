@@ -29,6 +29,7 @@ services:
       DB_URL: jdbc:postgresql://db:5432/noaa_database
       DB_USER: noaa_user
       DB_PASSWORD: your_secure_password
+
   frontend:
     build: ./frontend-map-app
     container_name: noaa-frontend
@@ -39,8 +40,10 @@ services:
       - "3000:3000"
     depends_on:
       - backend
+
 volumes:
   db-data:
+  redis-data:
 
 
 networks:

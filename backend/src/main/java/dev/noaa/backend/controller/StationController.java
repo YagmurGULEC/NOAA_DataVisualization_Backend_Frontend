@@ -18,17 +18,26 @@ public class StationController {
         this.stationService = stationService;
     }
 
-    @GetMapping("/stations")
-    public String getStations() {
-        return "Hello, NOAA!";
-    }
     @GetMapping("/data")
     public List<Station> getStationsWithData(
-            @RequestParam("startDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(value="startDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam("endDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+            @RequestParam(value="datatype", required=false) String datatype,
+            @RequestParam("datasetName") String datasetName) {
+        
+           if (datatype != null && !datatype.isEmpty()) {
+            return stationService.fetchFlatDataRaw(startDate, endDate, datatype, datasetName);   
+        } else {
+            return stationService.fetchFlatDataByDataset(startDate, endDate, datasetName);
+        }  
+       
+    }
+    @GetMapping("/data/exact")
+    public List<Station> getStationsWithExactDateData(
+            @RequestParam(value="date") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
             @RequestParam("datatype") String datatype,
             @RequestParam("datasetName") String datasetName) {
-        System.out.println("Start: " + startDate + ", End: " + endDate);
-        return stationService.fetchFlatDataRaw(startDate, endDate, datatype, datasetName);
-    }
+        return stationService.fetchFlatDataByDatasetDataTypeExactDate(date, datatype, datasetName);
+            }
+    
 }

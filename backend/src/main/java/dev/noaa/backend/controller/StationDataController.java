@@ -1,6 +1,8 @@
 package dev.noaa.backend.controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.format.annotation.DateTimeFormat;
 import dev.noaa.backend.service.StationDataService;
 import java.time.LocalDate;
 import java.util.*;
@@ -14,30 +16,34 @@ public class StationDataController {
         this.stationDataService = stationDataService;
     }
 
-    @GetMapping("/data-range")
-    public Map<String, String> getMinMaxDates() {
 
-        List<List<LocalDate>> minMaxDates = stationDataService.findMinMaxDates();
-
-        Map<String,String> response = new HashMap<>();
-        response.put("minDate", minMaxDates.get(0).get(0).toString());
-        response.put("maxDate", minMaxDates.get(0).get(1).toString());
-        return response;
-    }
 
     @GetMapping("/data-set")
     public Map<String, List> getDataSet() {
-        List<Object[]> result = stationDataService.getDataSet();
-
-        Set<String> dataTypes = new HashSet<>();
-        Set<String> datasetNames = new HashSet<>();
-        Map<String,List> dataSets = new HashMap<>();
-        for(Object [] objs : result){
-            dataTypes.add(objs[0].toString());
-            datasetNames.add(objs[1].toString());
-        }
-        dataSets.put("dataTypes", new ArrayList<>(dataTypes));
-        dataSets.put("datasetNames", new ArrayList<>(datasetNames));
+   
+        
+         List<Object []> result = stationDataService.getDataSet();
+         Set<String> datasets = new HashSet<>();
+         Set<String> datatypes = new HashSet<>();
+        result.forEach(row -> {
+            String datasetName = (String) row[1];
+            String datatype = (String) row[0];
+            datasets.add(datasetName);
+            datatypes.add(datatype);
+            
+        });
+        
+        Map<String, List> dataSets = new HashMap<>();
+        dataSets.put("dataSet", new ArrayList<>(datasets));
+        dataSets.put("dataType", new ArrayList<>(datatypes));
         return dataSets;
     }
+    @GetMapping("/dates")
+    public List<LocalDate> getDatesByDatatypeAndDatasetName(
+            @RequestParam("datatype") String datatype,
+            @RequestParam("datasetName") String datasetName) {
+        return stationDataService.getDatesByDatatypeAndDatasetName(datatype, datasetName);
+            }
+   
+    
 }

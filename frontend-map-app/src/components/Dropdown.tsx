@@ -1,67 +1,92 @@
-import React, { useState,useEffect} from "react";
+import { set } from "date-fns";
+import { da } from "date-fns/locale";
+import React, { useState, useEffect, use } from "react";
 
 
 type Props = {
-  datasets: string[];
-  datatypes: string[];
+    selectedDataset: string;
+    selectedDatatype: string;
     setSelectedDataset: (dataset: string) => void;
     setSelectedDatatype: (datatype: string) => void;
 };
-const dict_datasets = {
-                          "GHCND": "Daily Summaries",
-                          "GSOM": "Global Summary of the Month",
-                          "GSOY": "Global Summary of the Year",
-                          "NEXRAD2": "Weather Radar (Level II)",
-                          "NEXRAD3": "Weather Radar (Level III)",
-                          "NORMAL_ANN": "Normals Annual/Seasonal",
-                          "NORMAL_DLY": "Normals Daily",
-                          "NORMAL_HLY": "Normals Hourly",
-                          "NORMAL_MLY": "Normals Monthly",
-                          "PRECIP_15": "Precipitation 15 Minute",
-                          "PRECIP_HLY": "Precipitation Hourly"
-                      };
+const URLS = {
+    datasetfile: "./datasets_merged.json",
+    datatypefile: "./datatypes_merged.json",
+    dataSetUrl: "http://localhost:8080/data-set",
 
-const dict_datatypes = {
-                          "PRCP": "Precipitation",
-                          "SNOW": "Snowfall",
-                          "SNWD": "Snow Depth",
-                          "TMAX": "Max Temperature",
-                          "TMIN": "Min Temperature",
-                          "TAVG": "Average Temperature"
-                      };
-const Dropdown:React.FC<Props> =
-({datasets,datatypes,setSelectedDataset,setSelectedDatatype })=>{
-    const handleSelectedDatatypes = (event: React.ChangeEvent<HTMLSelectElement>) => {
+}
+const Dropdown: React.FC<Props> =
+    ({ setSelectedDataset, setSelectedDatatype }) => {
 
-        setSelectedDatatype(event.target.value);
-    }
-    const handleSelectedDatasets = (event: React.ChangeEvent<HTMLSelectElement>) => {
+        const [explanationData, setExplanationData] = useState<any>(null);
 
-        setSelectedDataset(event.target.value);
-    }
-    return (
-        <div className="d-flex flex-column align-items-start gap-2">
-        <label className="text-bold text-dark">Datatypes</label>
-        <select onChange={handleSelectedDatatypes}>
-        <option >Select</option>
-            {datatypes.map((datatype,i) => (
-                <option key={i} value={datatype}>{dict_datatypes[datatype]} ({datatype})</option>
-            ))}
+        useEffect(() => {
 
-        </select>
-         <label className="text-bold text-dark">Datasets</label>
-                <select onChange={handleSelectedDatasets}>
-                 <option >Select</option>
-                    {datasets.map((datatype,i) => (
-                        <option key={i} value={datatype}>{dict_datasets[datatype]} ({datatype})</option>
+            const fetchData = async () => {
+                try {
+                    const dataSet_response = await fetch(URLS.datasetfile);
+                    const dataset = await dataSet_response.json();
+                    const datatype_response = await fetch(URLS.datatypefile);
+                    const datatype = await datatype_response.json();
+                    const dataset_available_response = await fetch(URLS.dataSetUrl);
+                    const dataset_available = await dataset_available_response.json();
+
+                    // Map each dataset name to a key-value pair, here the value is an empty object
+                    const d = {
+                        "dataset": Object.fromEntries(
+                            dataset_available.dataSet.map((name: string | number) => [name, dataset[name]])
+                        ),
+                        "datatype": Object.fromEntries(
+                            dataset_available.dataType.map((name: string | number) => [name, datatype[name]])
+                        )
+                    };
+                    setExplanationData(d);
+
+
+
+                } catch (error) {
+                    console.error("Error fetching explanation data:", error);
+                }
+            };
+            fetchData();
+
+        }, []);
+
+        const handleSelectedDatatypes = (event: React.ChangeEvent<HTMLSelectElement>) => {
+
+            setSelectedDatatype(event.target.value);
+        }
+        const handleSelectedDatasets = (event: React.ChangeEvent<HTMLSelectElement>) => {
+
+            setSelectedDataset(event.target.value);
+        }
+
+        return (
+            <div className="d-flex flex-column align-items-start gap-2">
+
+
+                <label className="text-bold text-dark">Datasets</label>
+
+                <select onChange={handleSelectedDatasets} className="form-control">
+                    <option >Select</option>
+                    {explanationData && Object.keys(explanationData.dataset).map((key) => (
+                        <option key={key} value={key}>
+                            {/* Display the explanation if available, otherwise use the key */}
+                            {explanationData.dataset[key] ? `${explanationData.dataset[key]} (${key})` : key}
+                        </option>
                     ))}
-
                 </select>
-
-        </div>
-
-        )
-
+                <label className="text-bold text-dark">Datatypes</label>
+                <select onChange={handleSelectedDatatypes} className="form-control">
+                    <option >Select</option>
+                    {explanationData && Object.keys(explanationData.datatype).map((key) => (
+                        <option key={key} value={key}>
+                            {explanationData.datatype[key] ? `${explanationData.datatype[key]} (${key})` : key}
+                        </option>
+                    ))}
+                </select>
+            </div>
+        );
 
     }
 export default Dropdown;

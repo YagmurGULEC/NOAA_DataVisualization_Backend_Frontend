@@ -23,3 +23,5 @@ USING GIST (geom);
 
 CREATE INDEX IF NOT EXISTS station_data_filter_idx
 ON geo.station_data (date, datatype, dataset_name);
+
+
