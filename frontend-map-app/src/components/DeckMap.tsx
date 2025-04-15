@@ -165,7 +165,7 @@ export default function DeckMap() {
     }, [selectedDate]);
 
     return (
-        <div className="deckgl">
+        <div className="container-fluid">
 
             <DeckGL controller={true} initialViewState={INITIAL_VIEW_STATE} layers={layers}
                 getCursor={({ isDragging, isHovering }) => {
