@@ -1,22 +1,38 @@
 "use client";
-import React, { use, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import DeckGL, { LayersList } from "deck.gl";
 import { Map } from "react-map-gl/maplibre";
-import { GeoJsonLayer, ScatterplotLayer } from "@deck.gl/layers";
-import { HeatmapLayer } from "@deck.gl/aggregation-layers";
-import { DataFilterExtension, DataFilterExtensionProps } from '@deck.gl/extensions';
-import { FeatureCollection, Point } from "geojson"; // ✅ Import GeoJSON types
+import { ScatterplotLayer } from "@deck.gl/layers";
 import "maplibre-gl/dist/maplibre-gl.css";
 import styles from "../app/page.module.css";
-import ReactSlider from "react-slider";
 import "bootstrap/dist/css/bootstrap.min.css";
-import { scaleLinear } from 'd3';
+
+import { ScaleLinear, scaleLinear } from "d3-scale";
+
+
 import ColorBar from "./ColorBar";
 import DateRangePicker from "./DateRangePicker";
 import Dropdown from "./Dropdown";
-import { parseISO, format, setDate, min } from 'date-fns';
-import { se } from "date-fns/locale";
 
+type GeoJsonFeature = {
+    type: "Feature";
+    geometry: {
+        type: "Point";
+        coordinates: [number, number];
+    };
+    properties: {
+        data: {
+            [date: string]: number;
+        };
+        name: string;
+
+    };
+};
+
+type MinMax = {
+    min: number;
+    max: number;
+};
 
 const INITIAL_VIEW_STATE = {
     latitude: 51.47,
@@ -26,34 +42,19 @@ const INITIAL_VIEW_STATE = {
     pitch: 0,
 };
 
-const layout = {
-
-    sliders: [
-        {
-            active: 0,
-
-        },
-    ],
-}
-
 
 
 export default function DeckMap() {
 
-    const [pointData, setPointData] = useState<any>([]);
+    const [pointData, setPointData] = useState<GeoJsonFeature[]>([]);
     const [layers, setLayers] = useState<LayersList>([]);
-
-    const [timestamps, setTimestamps] = useState<string[]>([]); // List of timestamps
-
-    const [isPlaying, setIsPlaying] = useState(false);
-
     const [selectedDatatype, setSelectedDatatype] = useState<string>("");
     const [selectedDataset, setSelectedDataset] = useState<string>("");
     const [dates, setDates] = useState<string[]>([]); // List of dates
-    const [maxMinValue, setMaxMinValue] = useState<any>(null);
-    const [selectedDate, setSelectedDate] = useState<any>(null);
-    const [colorScale, setColorScale] = useState<any>(null);
-
+    const [maxMinValue, setMaxMinValue] = useState<MinMax | null>(null);
+    const [selectedDate, setSelectedDate] = useState<string | null>(null);
+    const [colorScale, setColorScale] = useState<ScaleLinear<string, string> | null>(null);
+    const [hoverInfo, setHoverInfo] = useState<GeoJsonFeature | null>(null);
     useEffect(() => {
 
         if (pointData.length === 0 || !maxMinValue) {
@@ -61,9 +62,10 @@ export default function DeckMap() {
             return;
         }
         setColorScale(() => {
-            return scaleLinear()
+            return scaleLinear<string, string>()
                 .domain([maxMinValue.min, maxMinValue.max])
-                .range(["blue", "red"]);
+                .range(["blue", "red"])
+
         });
 
 
@@ -73,21 +75,27 @@ export default function DeckMap() {
         if (colorScale === null) {
             return;
         }
-        const getTempColor = (temp: number) => {
-            var color = colorScale(temp);
-            var colorArray = color.match(/\d+/g);
-            return [parseInt(colorArray[0]), parseInt(colorArray[1]), parseInt(colorArray[2])];
-
+        const getTempColor = (temp: number): [number, number, number] => {
+            const color = colorScale(temp);
+            const colorArray = color.match(/\d+/g);
+            return colorArray ? [parseInt(colorArray[0]), parseInt(colorArray[1]), parseInt(colorArray[2])] as [number, number, number] : [0, 0, 0];
         }
         setLayers([
             new ScatterplotLayer({
                 id: `scatterplot-layer`,
-                data: pointData.filter(d => d.properties.data[selectedDate] !== undefined),
+                data: selectedDate ? pointData.filter(d => d.properties.data[selectedDate] !== undefined) : [],
                 getPosition: (d) => d.geometry.coordinates as [number, number],
                 getRadius: 50000, // Circle size in meters
-                getFillColor: (d) => getTempColor(d.properties.data[selectedDate]),
+                getFillColor: (d) => selectedDate ? getTempColor(d.properties.data[selectedDate]) : [0, 0, 0],
                 pickable: true,
                 opacity: 0.8,
+                onHover: info => {
+                    if (info.object) {
+                        setHoverInfo(info.object);
+                    } else {
+                        setHoverInfo(null);
+                    }
+                }
             }),
         ]);
 
@@ -128,7 +136,7 @@ export default function DeckMap() {
             return;
         }
 
-        console.log("Selected date:", selectedDate);
+
         const fetchPointData = async (datatype: string, datasetName: string, date: string) => {
             try {
                 const response = await fetch(`http://localhost:8080/data/exact?datatype=${datatype}&datasetName=${datasetName}&date=${date}`, {
@@ -142,10 +150,11 @@ export default function DeckMap() {
                 const data = await response.json();
 
                 setPointData(data);
-                const maxValue = Math.max(...data.map((d: any) => d.properties.data[selectedDate]));
-                const minValue = Math.min(...data.map((d: any) => d.properties.data[selectedDate]));
+                const maxValue = Math.max(...(data as GeoJsonFeature[]).map((d) => d.properties.data[selectedDate]));
+                const minValue = Math.min(...(data as GeoJsonFeature[]).map((d) => d.properties.data[selectedDate]));
+
                 setMaxMinValue({ max: maxValue, min: minValue });
-                console.log("Max value:", maxValue);
+
             }
             catch (error) {
                 console.error("Error fetching point data:", error);
@@ -156,9 +165,15 @@ export default function DeckMap() {
     }, [selectedDate]);
 
     return (
-        <div className="container-fluid overflow-hidden">
+        <div className="deckgl">
 
-            <DeckGL controller={true} initialViewState={INITIAL_VIEW_STATE} layers={layers}>
+            <DeckGL controller={true} initialViewState={INITIAL_VIEW_STATE} layers={layers}
+                getCursor={({ isDragging, isHovering }) => {
+                    // console.log(isDragging, isHovering);
+                    if (isDragging) return 'grabbing';
+                    if (isHovering) return 'pointer';
+                    return 'grab';
+                }}>
                 <Map mapStyle="https://basemaps.cartocdn.com/gl/positron-gl-style/style.json" />
             </DeckGL>
 
@@ -178,6 +193,27 @@ export default function DeckMap() {
 
                         filterDates={dates} setSelectedDate={setSelectedDate}
                     />
+                )}
+                {hoverInfo && (
+
+                    <div
+                        style={{
+                            position: 'absolute',
+                            zIndex: 1,
+                            pointerEvents: 'none',
+                            left: 10,
+                            top: 10,
+                            background: 'rgba(0, 0, 0, 0.8)',
+                            color: 'white',
+                            padding: '4px 8px',
+                            borderRadius: '4px',
+                            fontSize: '12px',
+                        }}
+                    >
+                        <div><b>Coordinates:</b> {hoverInfo.geometry.coordinates.join(", ")}</div>
+                        <div><b>Station Name:</b> {hoverInfo.properties.name}</div>
+                        <div><b>Value:</b> {selectedDate && hoverInfo.properties.data[selectedDate]}</div>
+                    </div>
                 )}
 
             </div>

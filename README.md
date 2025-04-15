@@ -85,18 +85,225 @@ station_data uses a composite key on (date, station_id, dataset_name, datatype)
   For fast spatial queries using PostGIS (e.g., find stations within a radius)
 - **B-tree index** on `station_data (date, datatype, dataset_name)`  
   Optimizes filtering by time, variable type, and dataset
-
+### Project Structure for database migrations
 ``` text
 migrations
-├── data
-│   └── csv
+├── csv
+│   ├── station_data
+│   │   ├── GSOM_2022-03-30_2023-03-30.csv
+│   │   ├── GSOM_2023-03-31_2024-03-31.csv
+│   │   └── GSOM_2024-04-01_2025-04-01.csv
+│   └── stations
+│       └── stations.csv
+├── init_sql
+│   └── init.sql
 ├── run_migrations.sh
 └── sql
-    ├── init.sql
-    ├── insert_stations.sql
-    ├── insert_stations_data.sql
     └── query.sql
   ```
+Your database should be ready to run the backend service.
+#### How to run the database with Docker
+
+```
+docker compose up db -d
+```
+#### How to migrate data to the database
+1- First create the schema and tables.
+```
+run_migrations.sh init.sql
+```
+2- You may need to have the CSVs in migrations/, you can download the folder from google drive https://drive.google.com/drive/folders/1IYsmxJI4N-VsF4U1sBR4cnWZ3XZgjVp-?usp=drive_link inside /migrations and unzip the zip file.
+
+
+3- First insert in stations table 
+
+```
+./run_migrations.sh insert_station
+```
+4- And then all the existing station data 
+```
+./run_migrations.sh insert_station_data
+```
+5- Go check the data if needed or any query put in the query.sql file
+```
+./run_migrations.sh query.sql
+```
+6- Delete all the csv files copied to the docker container, after having the inserted data.
+```
+./run_migrations.sh delete_all_csv
+```
+
+
+### Backend 
+I created the backend service to serve GeoJSON data, which is a standard format to send the geographic data. 
+### Project Structure 
+```
+backend
+├── HELP.md
+├── build.gradle
+├── gradle
+│   └── wrapper
+│       ├── gradle-wrapper.jar
+│       └── gradle-wrapper.properties
+├── gradlew
+├── gradlew.bat
+├── settings.gradle
+└── src
+    ├── main
+    │   ├── java
+    │   │   └── dev
+    │   │       └── noaa
+    │   │           └── backend
+    │   │               ├── BackendApplication.java
+    │   │               ├── config
+    │   │               │   └── CorsConfig.java
+    │   │               ├── controller
+    │   │               │   ├── StationController.java
+    │   │               │   └── StationDataController.java
+    │   │               ├── model
+    │   │               │   ├── Station.java
+    │   │               │   ├── StationData.java
+    │   │               │   └── StationDataId.java
+    │   │               ├── repository
+    │   │               │   ├── StationDataRepo.java
+    │   │               │   └── StationRepo.java
+    │   │               ├── service
+    │   │               │   ├── StationDataService.java
+    │   │               │   └── StationService.java
+    │   │               └── util
+    │   │                   └── StationGeoJsonSerializer.java
+    │   └── resources
+    │       ├── application.yaml
+    │       ├── static
+    │       └── templates
+    └── test
+        ├── java
+        │   └── dev
+        │       └── noaa
+        │           └── backend
+        │               └── BackendApplicationTests.java
+        └── resources
+            └── application-test.yml
+```
+You can check the GeoJSON output by querying with the date, data type and dataset name. 
+```
+curl -X GET "http://localhost:8080/data/exact?date=2025-01-01&datatype=TAVG&datasetName=GSOM" -H "Content-Type: application/json" |jq | head -n 20
+```
+or on the browser.
+
+
+![Alt text](screenshot_backend.png)
+
+
+
+
+#### Technologies Used
+- Spring Boot - for building the RestAPI from PostgreSQL with PostGIS
+- Gradle - build automation tool
+
+### Prerequisites
+- Java 21+
+- Gradle 8.12+ 
+
+### How to run with Gradle
+First you need to have the database with data migrated and move on to the backend part
+
+1- Start the Spring Boot service without needing to build a .jar file
+```
+./gradlew bootRun
+```
+
+2- Second alternative is to compile and test and package the app and then run -jar file inside build/libs/
+
+```
+./gradlew clean build
+```
+and then 
+```
+java -jar build/libs/backend-0.0.1-SNAPSHOT.jar
+```
+
+### Frontend
+
+This is an interactive geospatial web application built with **Next.js**, **Deck.gl**. It visualizes datasets using customizable color scales, date pickers, and dynamic map layers.
+### Features 
+- 🗺️ Map rendering with `deck.gl` and `MapLibre`
+- 📅 Interactive date range picker
+- 🎨 Color bar legends for visual cues
+- 📊 Dataset and data type selection with dropdowns
+- ⚙️ Built with modern technologies: TypeScript, React 18, and Next.js 15
+
+### Technologies Used
+- **Next.js** 15 with App Router
+- **TypeScript**
+- **Deck.gl** for high-performance map layers
+- **MapLibre GL** for map rendering
+- **D3.js** for color scaling and data representation
+- **React Datepicker**, and other UI libraries
+
+### Project Structure
+```
+frontend-map-app/
+├── Dockerfile
+├── README.md
+├── eslint.config.mjs
+├── next-env.d.ts
+├── next.config.ts
+├── package-lock.json
+├── package.json
+├── public
+│   ├── datasets_merged.json
+│   └── datatypes_merged.json
+├── src
+│   ├── app
+│   │   ├── favicon.ico
+│   │   ├── globals.css
+│   │   ├── layout.tsx
+│   │   ├── page.module.css
+│   │   └── page.tsx
+│   └── components
+│       ├── ColorBar.tsx
+│       ├── DateRangePicker.tsx
+│       ├── DeckMap.tsx
+│       ├── Dropdown.tsx
+│       └── MapComponent.tsx
+└── tsconfig.json
+```
+### Installation 
+Make sure you have **Node.js 18+** and **npm** installed.
+
+Run in the development mode.
+```bash
+cd frontend-map-app
+npm install
+npm run dev
+```
+Or build for production:
+```
+npm run build
+npm run start
+```
+![Alt text](screenshot_frontend.png)
+
+
+## Run With Docker
+You can run the whole stack database, backend and frontend 
+```
+docker compose up -d
+```
+If you want to start a database 
+```
+docker compose up db -d
+```
+If you want to delete whole data in the database 
+
+```
+docker compose down -v
+```
+
+
+
+
 
 
 

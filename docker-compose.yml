@@ -14,6 +14,7 @@ services:
       - "5432:5432"
     volumes:
       - db-data:/var/lib/postgresql/data
+      - ./migrations/init_sql:/docker-entrypoint-initdb.d
 
   backend:
     build: ./backend

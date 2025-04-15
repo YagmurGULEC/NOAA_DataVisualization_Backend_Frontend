@@ -6,9 +6,9 @@ spring:
     name: backend
 
   datasource:
-    url: jdbc:postgresql://localhost:5432/noaa_database
-    username: noaa_user
-    password: your_secure_password
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/noaa_database}
+    username: ${DB_USER:noaa_user}
+    password:  ${DB_PASSWORD:your_secure_password}
     driver-class-name: org.postgresql.Driver
 
   jpa:

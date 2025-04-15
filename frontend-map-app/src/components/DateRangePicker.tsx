@@ -1,5 +1,5 @@
 import { parseISO, format } from "date-fns";
-import React, { useState, useEffect, use } from "react";
+import React, { useState } from "react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 
@@ -9,14 +9,9 @@ type Props = {
 };
 
 const DateRangePicker: React.FC<Props> = ({ filterDates, setSelectedDate }) => {
-  const [excludedDates, setExcludedDates] = useState<Date[]>([]);
+
   const [selectedDate, setSelectedDateState] = useState<Date | null>(null);
 
-  useEffect(() => {
-
-    const dates = filterDates.map((date) => new Date(date));
-
-  }, [filterDates]);
   return (
     <>
       <label className="text-bold text-dark">Select Dates</label>

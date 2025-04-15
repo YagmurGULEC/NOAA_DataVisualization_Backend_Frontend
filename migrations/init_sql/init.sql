@@ -9,10 +9,10 @@ CREATE TABLE IF NOT EXISTS geo.stations (
 
 CREATE TABLE IF NOT EXISTS geo.station_data (
     date DATE NOT NULL,
-    station_id TEXT NOT NULL,
-    dataset_name TEXT NOT NULL,
     datatype TEXT NOT NULL,
+    station_id TEXT NOT NULL,
     value FLOAT NOT NULL,
+    dataset_name TEXT NOT NULL,
     PRIMARY KEY (date, station_id, dataset_name, datatype),
     FOREIGN KEY (station_id) REFERENCES geo.stations(id) ON DELETE CASCADE
 );

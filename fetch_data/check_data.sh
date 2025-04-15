@@ -3,8 +3,8 @@
 START_OFFSET=1000
 LIMIT=1000
 
-DATASET_ID=("GSOM")
-OUTPUT_DIR="."
+DATASET_ID=("GHCND")
+OUTPUT_DIR=".."
 COMPRESSED_DIR="./compressed"
 export START_OFFSET LIMIT COMPRESSED_DIR
 mkdir -p "$COMPRESSED_DIR"
@@ -22,15 +22,15 @@ check_data() {
         count=$(jq '.metadata.resultset.count' "$first")
         local offsets
         offsets=$(seq "$START_OFFSET" "$LIMIT" "$count")
-        
-        for i in $offsets; do
-            local file="${folder}/${i}.json"
-            if [ ! -f "$file" ]; then
-                missing_files+=("$file")
-            elif ! jq 'has("results") and (.results | length > 0)' "$file" 2>/dev/null | grep -q true; then
-                missing_files+=("$file")
-            fi
-        done
+        echo "Count: $count"
+        # for i in $offsets; do
+        #     local file="${folder}/${i}.json"
+        #     if [ ! -f "$file" ]; then
+        #         missing_files+=("$file")
+        #     elif ! jq 'has("results") and (.results | length > 0)' "$file" 2>/dev/null | grep -q true; then
+        #         missing_files+=("$file")
+        #     fi
+        # done
     else
         missing_files+=("$first")
     fi
@@ -49,7 +49,7 @@ check_data() {
     
 }
 
-dates=$(find "${OUTPUT_DIR}/GSOM" -mindepth 1 -type d )
+dates=$(find "${OUTPUT_DIR}/GHCND" -mindepth 1 -type d )
 for folder in $dates; do
     echo "Checking folder: $folder"
     check_data "$folder"

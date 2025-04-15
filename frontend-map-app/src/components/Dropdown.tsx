@@ -1,6 +1,5 @@
-import { set } from "date-fns";
-import { da } from "date-fns/locale";
-import React, { useState, useEffect, use } from "react";
+
+import React, { useState, useEffect } from "react";
 
 
 type Props = {
@@ -8,6 +7,15 @@ type Props = {
     selectedDatatype: string;
     setSelectedDataset: (dataset: string) => void;
     setSelectedDatatype: (datatype: string) => void;
+};
+
+type ExplanationMap = {
+    [key: string]: string;
+};
+
+type ExplanationData = {
+    dataset: ExplanationMap;
+    datatype: ExplanationMap;
 };
 const URLS = {
     datasetfile: "./datasets_merged.json",
@@ -18,7 +26,7 @@ const URLS = {
 const Dropdown: React.FC<Props> =
     ({ setSelectedDataset, setSelectedDatatype }) => {
 
-        const [explanationData, setExplanationData] = useState<any>(null);
+        const [explanationData, setExplanationData] = useState<ExplanationData | null>(null);
 
         useEffect(() => {
 

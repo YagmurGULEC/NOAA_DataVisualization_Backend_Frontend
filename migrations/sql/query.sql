@@ -1,3 +1,5 @@
+
+
 -- SELECT DISTINCT geo.station_data.datatype FROM geo.station_data
 
 
@@ -7,9 +9,14 @@
 -- select count(distinct station_id)
 --   from geo.station_data;
 
--- select count(*)
---   from geo.stations;
+select count(*)
+  from geo.stations;
 
+select * from geo.stations limit 10;
+
+select count(*)
+  from geo.station_data;
+select * from geo.station_data limit 10;
 -- ---Query to filter by date and datatype 
 
 -- select *
@@ -28,11 +35,7 @@
 -- GROUP BY dataset_name, datatype
 -- ORDER BY dataset_name, datatype;
 
-select distinct ( geo.station_data.date )
-  from geo.station_data
- where dataset_name = 'GSOM'
-   and datatype = 'TMAX'
- order by date;
+
 -- Query to see  dataset_name and datatype by date
 -- explain analyze
 -- select geo.stations.id, geo.stations.name,geo.station_data.dataset_name,

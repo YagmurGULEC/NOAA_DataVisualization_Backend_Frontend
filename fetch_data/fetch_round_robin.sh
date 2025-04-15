@@ -2,16 +2,17 @@
 
 BASE_URL="https://www.ncei.noaa.gov/cdo-web/api/v2"
 NOAA_API_KEYS=("${NOAA_API_KEY_1}" "${NOAA_API_KEY_2}" "${NOAA_API_KEY_3}")
-START_OFFSET=1000
+START_OFFSET=0
 LIMIT=1000
-TOTAL_COUNT=4900767
+TOTAL_COUNT=4000000
 NUM_KEYS=${#NOAA_API_KEYS[@]}
 OUTPUT_DIR="$HOME/noaa_data"
-LATEST_DATE="2023-03-31"
-END_DATE=$(date -d "$LATEST_DATE -1 day" +"%Y-%m-%d")
-# END_DATE="2024-03-31"
+# LATEST_DATE="2023-03-31"
+# END_DATE=$(date -d "$LATEST_DATE -1 day" +"%Y-%m-%d")
+END_DATE=$(date +"%Y-%m-%d")
 START_DATE=$(date -d "$END_DATE -1 year" +"%Y-%m-%d")
-DATASET_ID=("GSOM")
+
+DATASET_ID=("GHCND")
 export NOAA_API_KEYS_STR="${NOAA_API_KEYS[*]}"
 
 export BASE_URL OUTPUT_DIR LIMIT START_OFFSET START_DATE END_DATE NUM_KEYS  NOAA_API_KEYS_STR LIMIT
@@ -31,7 +32,7 @@ fetch_page() {
         local key_index=$(( (initial_index+attempt-1) % ${#NOAA_API_KEYS[@]} ))
         local current_api_key="${NOAA_API_KEYS[$key_index]}"
     
-        echo "🆔 Running PID $$ for offset=$offset on endpoint=$endpoint (Attempt $attempt) $current_api_key"
+        echo "🆔 Running PID $$ for offset=$offset on endpoint=$endpoint (Attempt $attempt)"
         
         URL="$BASE_URL/data?datasetid=$dataset_id&offset=$offset&limit=$LIMIT&startdate=$START_DATE&enddate=$END_DATE"
         echo "Requesting: $URL"
